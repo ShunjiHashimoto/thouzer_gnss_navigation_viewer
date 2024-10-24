@@ -1,0 +1,2 @@
+# thouzer_gnss_navigation_viewer
+GNSSナビゲーション時にサウザーの状態をRViz上に表示するためのリポジトリ
