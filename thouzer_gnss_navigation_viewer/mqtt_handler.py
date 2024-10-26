@@ -81,6 +81,24 @@ class MqttHandler:
         topic = MQTTParam.topic_event
         self.publish_mqtt_msg(topic, msg)
 
+    def pub_waypoints(self, waypoints):
+        for waypoint in waypoints:
+            lat_deg, lon_deg, yaw_deg, is_pause = waypoint
+            status = "paused" if is_pause else "waypoint" 
+            msg = {
+                "data": {
+                    "application": "whisperer",
+                    "status": status,
+                    "LatLonYaw": {
+                        "lat_deg": round(lat_deg, 10),
+                        "lon_deg": round(lon_deg, 10),
+                        "yaw_deg": round(yaw_deg, 1)
+                    }
+                }
+            }
+        topic = MQTTParam.topic_event
+        self.publish_mqtt_msg(topic, msg)
+
     def pub_success(self,) -> None:
         msg = {
             "app": "#success",

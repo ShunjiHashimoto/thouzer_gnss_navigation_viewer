@@ -26,7 +26,7 @@ class GNSSNavigationViewer(Node):
         self.mqtt_handler = MqttHandler(on_message_callback=self.handle_mqtt_message, topic_sub=MQTTParam.topic_event)
         self.mqtt_handler.start_whisperer()  # MQTTのループを開始
         # 初期の位置を保存する変数
-        self.initial_blh = None
+        self.initial_blh = blh(datum, 36.08295588, 140.0769761, 0)
     
     # 時間経過するにつれてマーカの色を透明化する
     def update_marker_opacity(self, marker_msg):
@@ -42,40 +42,32 @@ class GNSSNavigationViewer(Node):
     def handle_mqtt_message(self, payload: str):
         try:
             data = json.loads(payload)
+            waypoint_flag = False
+            if data["data"]["status"] == "waypoint" or data["data"]["status"] == "paused": waypoint_flag = True
             # GNSSデータから位置と向きを設定
-            lat_center = data["data"]["AntennaPositions"]["center"]["lat"]
-            lon_center = data["data"]["AntennaPositions"]["center"]["lon"]
-            lat_right = data["data"]["AntennaPositions"]["right"]["lat"]
-            lon_right = data["data"]["AntennaPositions"]["right"]["lon"]
-            lat_left = data["data"]["AntennaPositions"]["left"]["lat"]
-            lon_left = data["data"]["AntennaPositions"]["left"]["lon"]
-            yaw = data["data"]["Attitude"]["yaw"]
-            # 初回の緯度経度を保存
-            if self.initial_blh is None:
-                self.initial_blh = blh(datum, lat_center, lon_center, 0.0)
-                self.get_logger().info(f"Initial Position Set: {self.initial_blh}")
+            lat_deg = data["data"]["LatLonYaw"]["lat_deg"]
+            lon_deg = data["data"]["LatLonYaw"]["lon_deg"]
+            yaw_deg = data["data"]["LatLonYaw"]["yaw_deg"]
             # PoseStampedメッセージを作成
             pose_msg = PoseStamped()
             pose_msg.header.stamp = self.get_clock().now().to_msg()
             pose_msg.header.frame_id = 'map'
             # 緯度経度をXY座標に変換
-            x, y = getXY(self.initial_blh, lat_center, lon_center, 0.0)
+            x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
             # 位置を設定
             pose_msg.pose.position.x = x
             pose_msg.pose.position.y = y
             pose_msg.pose.position.z = 0.0
             # Yaw角をクオータニオンに変換して方向を設定
-            pose_msg.pose.orientation.z = math.sin(math.radians(yaw) / 2)
-            pose_msg.pose.orientation.w = math.cos(math.radians(yaw) / 2)
+            pose_msg.pose.orientation.z = math.sin(math.radians(yaw_deg) / 2)
+            pose_msg.pose.orientation.w = math.cos(math.radians(yaw_deg) / 2)
             # トピックにPoseメッセージをpublish
             self.pose_publisher_.publish(pose_msg)
             self.get_logger().info(f"Published Pose: {pose_msg}")
             # MarkerArrayメッセージを作成
             marker_array_msg = MarkerArray()
             antennas = [
-                {"name": "中心アンテナ", "lat": lat_center, "lon": lon_center},
-                {"name": "右アンテナ", "lat": lat_right, "lon": lon_right},
-                {"name": "左アンテナ", "lat": lat_left, "lon": lon_left}
+                {"name": "中心座標", "lat": lat_deg, "lon": lon_deg},
             ]
             for idx, antenna in enumerate(antennas):
                 marker_msg = Marker()
@@ -98,12 +90,26 @@ class GNSSNavigationViewer(Node):
                 marker_msg.color.r = 0.0
                 marker_msg.color.g = 1.0
                 marker_msg.color.b = 0.0
+                yaw_deg = data["data"]["LatLonYaw"]["yaw_deg"]
+                if data["data"]["status"] == "paused":
+                    marker_msg.color.r = 1.0
+                    marker_msg.color.g = 0.0
+                    marker_msg.color.b = 0.0
+                if data["data"]["status"] == "waypoint":
+                    marker_msg.color.r = 1.0
+                    marker_msg.color.g = 0.0
+                    marker_msg.color.b = 0.0
+                if waypoint_flag:
+                    marker_msg.scale.x = 0.5
+                    marker_msg.scale.y = 0.5
+                    marker_msg.scale.z = 0.5
                 marker_msg.lifetime = Duration()
                 # MarkerをMarkerArrayに追加
                 marker_array_msg.markers.append(marker_msg)
             # トピックにMarkerArrayメッセージをpublish
             self.marker_array_publisher_.publish(marker_array_msg)
             self.get_logger().info(f"Published MarkerArray with {len(marker_array_msg.markers)} markers")
+            if waypoint_flag: return
 
             # ロボットのSTLファイルを表示するMarkerを追加
             robot_marker = Marker()
@@ -117,14 +123,12 @@ class GNSSNavigationViewer(Node):
             robot_marker.mesh_resource = "package://thouzer_description/meshes/RMS-10E2.STL"
             robot_marker.mesh_use_embedded_materials = True
             # 中心位置を右左アンテナの中点に設定
-            lat_mid = (lat_right + lat_left) / 2
-            lon_mid = (lon_right + lon_left) / 2
-            x, y = getXY(self.initial_blh, lat_mid, lon_mid, 0.0)
+            x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
             robot_marker.pose.position.x = x + 0.25
             robot_marker.pose.position.y = y
             robot_marker.pose.position.z = 0.0
-            robot_marker.pose.orientation.z = math.sin(math.radians(yaw) / 2)
-            robot_marker.pose.orientation.w = math.cos(math.radians(yaw) / 2)
+            robot_marker.pose.orientation.z = math.sin(math.radians(yaw_deg) / 2)
+            robot_marker.pose.orientation.w = math.cos(math.radians(yaw_deg) / 2)
 
              # ロールで90度回転、その後ヨーで90度回転するクォータニオンを作成
             roll_angle = math.radians(90)  # ロール角度（X軸）+90度

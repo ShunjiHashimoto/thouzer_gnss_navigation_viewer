@@ -11,20 +11,28 @@ thouzer_topic = MQTTParam.topic_event
 
 # CSVファイルの読み込み
 gnss_data_file = '../csv/log20241006-103121.csv'
-antenna_data = []
+waypoint_data_file = '../csv/waypoint_test.csv'
+latlonyaw_data = []
+waypoint_list = []
 
 with open(gnss_data_file, newline='') as csvfile:
     reader = csv.reader(csvfile)
     for row in reader:
         if(row[5] != "4" or row[14] == "" or row[15] == ""): 
-            print("not fix")
+            # print("not fix")
             continue
-        # 3つのアンテナの緯度と経度および姿勢情報を取得（0:中心, 6:右, 12:左, 18:姿勢）
-        antenna_data.append({
-            "center": {"lat": float(row[2]), "lon": float(row[3])},
-            "right": {"lat": float(row[8]), "lon": float(row[9])},
-            "left": {"lat": float(row[14]), "lon": float(row[15])},
-            "attitude": {"yaw": float(0.0)}  # 姿勢情報（yawのみ）
+        latlonyaw_data.append({
+            "status":"run",
+            "LatLonYaw": {"lat_deg": float(row[2]), "lon_deg": float(row[3]), "yaw_deg": float(0.0)},
+        })
+
+with open(waypoint_data_file, newline='') as csvfile:
+    reader = csv.reader(csvfile)
+    for i, row in enumerate(reader):
+        if i==0: continue
+        waypoint_list.append({
+            "status":"waypoint",
+            "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
         })
 
 
@@ -34,18 +42,38 @@ client = mqtt.Client()
 # 接続
 client.connect(MQTT_BROKER, MQTT_PORT, 60)
 
-# データを順に送信
-for data in antenna_data:
+for waypoint in waypoint_list:
     # 送信するデータをJSON形式で作成
     message = {
         "data": {
-            "AntennaPositions": {
-                "center": {"lat": data["center"]["lat"], "lon": data["center"]["lon"]},
-                "right": {"lat": data["right"]["lat"], "lon": data["right"]["lon"]},
-                "left": {"lat": data["left"]["lat"], "lon": data["left"]["lon"]}
+            "status" :waypoint["status"],
+            "LatLonYaw": {
+                "lat_deg": waypoint["LatLonYaw"]["lat_deg"],
+                "lon_deg": waypoint["LatLonYaw"]["lon_deg"],
+                "yaw_deg": waypoint["LatLonYaw"]["yaw_deg"]
             },
-            "Attitude": {
-                "yaw": data["attitude"]["yaw"]
+        }
+    }
+
+    # JSON文字列に変換
+    payload = json.dumps(message)
+
+    # メッセージを指定したトピックにpublish
+    client.publish(thouzer_topic, payload)
+    print(f"Published: {payload}")
+    time.sleep(0.5)
+    
+
+# データを順に送信
+for data in latlonyaw_data:
+    # 送信するデータをJSON形式で作成
+    message = {
+        "data": {
+            "status":data["status"],
+            "LatLonYaw": {
+                "lat_deg": data["LatLonYaw"]["lat_deg"],
+                "lon_deg": data["LatLonYaw"]["lon_deg"],
+                "yaw_deg": data["LatLonYaw"]["yaw_deg"]
             }
         }
     }
