@@ -11,7 +11,9 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/meshes', glob('src/thouzer_gnss_navigation_viewer/meshes/*.stl')),
+        ('share/' + package_name + '/meshes', glob('meshes/*.STL')),
+        ('share/' + package_name + '/launch', glob('launch/*.py')),
+        ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -22,6 +24,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
+            'gnss_viewer = thouzer_gnss_navigation_viewer.gnss_navigation_viewer:main'
         ],
     },
 )

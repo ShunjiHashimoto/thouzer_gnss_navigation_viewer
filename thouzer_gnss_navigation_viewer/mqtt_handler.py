@@ -5,7 +5,7 @@ import time
 import json
 from paho.mqtt import client as mqtt_client
 from typing import Dict
-from config import MQTTParam
+from .config import MQTTParam
 
 class MqttHandler:
     debug = True

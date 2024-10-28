@@ -11,8 +11,8 @@ from builtin_interfaces.msg import Duration
 # custom
 from gnss_module.coordinate import blh, getXY
 import gnss_module.WGS84 as datum 
-from mqtt_handler import MqttHandler 
-from config import MQTTParam
+from .mqtt_handler import MqttHandler
+from .config import MQTTParam
 from tf_transformations import quaternion_from_euler
 
 class GNSSNavigationViewer(Node):
@@ -26,7 +26,7 @@ class GNSSNavigationViewer(Node):
         self.mqtt_handler = MqttHandler(on_message_callback=self.handle_mqtt_message, topic_sub=MQTTParam.topic_event)
         self.mqtt_handler.start_whisperer()  # MQTTのループを開始
         # 初期の位置を保存する変数
-        self.initial_blh = blh(datum, 36.08295588, 140.0769761, 0)
+        self.initial_blh = blh(datum, 36.083208948105906,140.07766251434052, 0)
     
     # 時間経過するにつれてマーカの色を透明化する
     def update_marker_opacity(self, marker_msg):
@@ -83,9 +83,9 @@ class GNSSNavigationViewer(Node):
                 marker_msg.pose.position.y = y
                 marker_msg.pose.position.z = 0.5
                 marker_msg.pose.orientation.w = 1.0
-                marker_msg.scale.x = 0.1
-                marker_msg.scale.y = 0.1
-                marker_msg.scale.z = 0.1
+                marker_msg.scale.x = 0.5
+                marker_msg.scale.y = 0.5
+                marker_msg.scale.z = 0.5
                 marker_msg.color.a = 0.4
                 marker_msg.color.r = 0.0
                 marker_msg.color.g = 1.0
@@ -93,16 +93,16 @@ class GNSSNavigationViewer(Node):
                 yaw_deg = data["data"]["LatLonYaw"]["yaw_deg"]
                 if data["data"]["status"] == "paused":
                     marker_msg.color.r = 1.0
-                    marker_msg.color.g = 0.0
+                    marker_msg.color.g = 1.0
                     marker_msg.color.b = 0.0
                 if data["data"]["status"] == "waypoint":
                     marker_msg.color.r = 1.0
                     marker_msg.color.g = 0.0
                     marker_msg.color.b = 0.0
                 if waypoint_flag:
-                    marker_msg.scale.x = 0.5
-                    marker_msg.scale.y = 0.5
-                    marker_msg.scale.z = 0.5
+                    marker_msg.scale.x = 1.0
+                    marker_msg.scale.y = 1.0
+                    marker_msg.scale.z = 1.0
                 marker_msg.lifetime = Duration()
                 # MarkerをMarkerArrayに追加
                 marker_array_msg.markers.append(marker_msg)
@@ -120,7 +120,7 @@ class GNSSNavigationViewer(Node):
             robot_marker.type = Marker.MESH_RESOURCE
             robot_marker.action = Marker.ADD
             # STLファイルのパスを設定
-            robot_marker.mesh_resource = "package://thouzer_description/meshes/RMS-10E2.STL"
+            robot_marker.mesh_resource = "package://thouzer_gnss_navigation_viewer/meshes/RMS-10E2.STL"
             robot_marker.mesh_use_embedded_materials = True
             # 中心位置を右左アンテナの中点に設定
             x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
@@ -141,16 +141,16 @@ class GNSSNavigationViewer(Node):
             robot_marker.pose.orientation.y = q[1]
             robot_marker.pose.orientation.z = q[2]
             robot_marker.pose.orientation.w = q[3]
-            robot_marker.scale.x = 0.001
-            robot_marker.scale.y = 0.001
-            robot_marker.scale.z = 0.001
+            robot_marker.scale.x = 0.002
+            robot_marker.scale.y = 0.002
+            robot_marker.scale.z = 0.002
             robot_marker.color.a = 1.0
             robot_marker.color.r = 0.5
             robot_marker.color.g = 0.5
             robot_marker.color.b = 0.5
             robot_marker.lifetime = Duration()
             robot_marker.lifetime.sec = 0
-            robot_marker.lifetime.nanosec = 500000000
+            robot_marker.lifetime.nanosec = 200000000
             # MarkerArrayに追加
             marker_array_msg.markers.append(robot_marker)
             # トピックにロボットSTLマーカーをpublish

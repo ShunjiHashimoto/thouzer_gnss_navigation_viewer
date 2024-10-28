@@ -10,8 +10,10 @@ MQTT_PORT = 1883           # MQTTのポート（通常は1883）
 thouzer_topic = MQTTParam.topic_event
 
 # CSVファイルの読み込み
-gnss_data_file = '../csv/log20241006-103121.csv'
-waypoint_data_file = '../csv/waypoint_test.csv'
+# gnss_data_file = '../csv/log20241027-150614.csv'
+gnss_data_file = '../csv/log20241027-131648.csv'
+# waypoint_data_file = '../csv/101.csv'
+waypoint_data_file = '../csv/102.csv'
 latlonyaw_data = []
 waypoint_list = []
 
@@ -19,22 +21,27 @@ with open(gnss_data_file, newline='') as csvfile:
     reader = csv.reader(csvfile)
     for row in reader:
         if(row[5] != "4" or row[14] == "" or row[15] == ""): 
-            # print("not fix")
+            print("not fix")
             continue
         latlonyaw_data.append({
             "status":"run",
-            "LatLonYaw": {"lat_deg": float(row[2]), "lon_deg": float(row[3]), "yaw_deg": float(0.0)},
+            "LatLonYaw": {"lat_deg": float(row[14]), "lon_deg": float(row[15]), "yaw_deg": float(row[17])},
         })
 
 with open(waypoint_data_file, newline='') as csvfile:
     reader = csv.reader(csvfile)
     for i, row in enumerate(reader):
         if i==0: continue
-        waypoint_list.append({
-            "status":"waypoint",
-            "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
-        })
-
+        if row[3] == "False":
+            waypoint_list.append({
+                "status":"waypoint",
+                "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
+            })
+        else:
+            waypoint_list.append({
+                "status":"paused",
+                "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
+            })
 
 # MQTTクライアントのセットアップ
 client = mqtt.Client()
@@ -61,7 +68,7 @@ for waypoint in waypoint_list:
     # メッセージを指定したトピックにpublish
     client.publish(thouzer_topic, payload)
     print(f"Published: {payload}")
-    time.sleep(0.5)
+    time.sleep(0.03)
     
 
 # データを順に送信
@@ -86,7 +93,7 @@ for data in latlonyaw_data:
     print(f"Published: {payload}")
 
     # 1秒待機して次のデータを送信
-    time.sleep(0.5)
+    time.sleep(0.1)
 
 # MQTTクライアントの終了
 client.disconnect()

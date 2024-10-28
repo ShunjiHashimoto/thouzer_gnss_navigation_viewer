@@ -5,8 +5,8 @@ use_case_antenna = "f9p" # f9p or acm
 use_case_gnss_correction = "ichimill" # ichimill or geortk
 
 class MQTTParam:
-    broker = '192.168.212.1' # メッセージの仲介を行う、PublisherからSubscriberｈメッセージを転送する
-    # broker = "localhost"
+    # broker = '192.168.212.1' # メッセージの仲介を行う、PublisherからSubscriberｈメッセージを転送する
+    broker = "localhost"
     port = 1883 # デフォルトのport番号
     if use_case_robot == "icart3":
         serial = "RMS-TFRG-000"
