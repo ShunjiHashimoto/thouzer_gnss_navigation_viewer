@@ -5,7 +5,7 @@ GNSSナビゲーション時にサウザーの状態をRViz上に表示するた
 
 # Build 
 ```bash
-$ cd ~/ros2_ws/src/thouzer_gnss_navigation_viewer
+$ cd ~/ros2_ws/src/thouzer_gnss_navigation_viewer/docker
 $ docker build -t gnss-docker::latest .
 ```
 ビルドが完了すれば本パッケージをビルドする   
