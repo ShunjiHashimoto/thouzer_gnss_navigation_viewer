@@ -166,23 +166,3 @@ class MqttHandler:
         print(msg)
         topic = MQTTParam.topic_exec
         status = self.publish_mqtt_msg(topic, msg)
-        
-def main():
-    gnss_controler = GNSSController()
-    mqtt_handler = MqttHandler(on_message_callback=gnss_controler.handle_message)
-    mqtt_handler.start_whisperer()
-    time.sleep(0.5)
-    mqtt_handler.change_speed_mode(0)
-    time.sleep(0.5)
-    mqtt_handler.start_gnss_memorize()
-    time.sleep(0.5)
-    mqtt_handler.stop_gnss_memorize()
-    time.sleep(0.5)
-    mqtt_handler.start_gnss_navigate()
-    time.sleep(0.5)
-    mqtt_handler.avoid_obstacle(1, 10)
-    time.sleep(0.5)
-    mqtt_handler.stop_whisperer()
-
-if __name__ == '__main__':          
-  main()  
