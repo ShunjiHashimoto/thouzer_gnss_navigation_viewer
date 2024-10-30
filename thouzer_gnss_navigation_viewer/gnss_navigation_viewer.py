@@ -86,7 +86,7 @@ class GNSSNavigationViewer(Node):
                 marker_msg.scale.x = 0.5
                 marker_msg.scale.y = 0.5
                 marker_msg.scale.z = 0.5
-                marker_msg.color.a = 0.4
+                marker_msg.color.a = 1.0
                 marker_msg.color.r = 0.0
                 marker_msg.color.g = 1.0
                 marker_msg.color.b = 0.0
@@ -120,31 +120,19 @@ class GNSSNavigationViewer(Node):
             robot_marker.type = Marker.MESH_RESOURCE
             robot_marker.action = Marker.ADD
             # STLファイルのパスを設定
-            robot_marker.mesh_resource = "package://thouzer_gnss_navigation_viewer/meshes/RMS-10E2.STL"
-            robot_marker.mesh_use_embedded_materials = True
+            robot_marker.mesh_resource = "package://thouzer_gnss_navigation_viewer/meshes/RMS-SZE2.STL"
+            robot_marker.mesh_use_embedded_materials = True # meshファイルの内部のcolor情報を描画
             # 中心位置を右左アンテナの中点に設定
             x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
-            robot_marker.pose.position.x = x + 0.25
+            robot_marker.pose.position.x = x 
             robot_marker.pose.position.y = y
             robot_marker.pose.position.z = 0.0
             robot_marker.pose.orientation.z = math.sin(math.radians(yaw_deg) / 2)
             robot_marker.pose.orientation.w = math.cos(math.radians(yaw_deg) / 2)
-
-             # ロールで90度回転、その後ヨーで90度回転するクォータニオンを作成
-            roll_angle = math.radians(90)  # ロール角度（X軸）+90度
-            yaw_angle = math.radians(-90)   # ヨー角度（Z軸）+90度
-            pitch_angle = 0.0              # ピッチ（Y軸）は回転なし
-             # クォータニオンを生成
-            q = quaternion_from_euler(roll_angle, pitch_angle, yaw_angle)
-            robot_marker.pose.orientation = Quaternion()
-            robot_marker.pose.orientation.x = q[0]
-            robot_marker.pose.orientation.y = q[1]
-            robot_marker.pose.orientation.z = q[2]
-            robot_marker.pose.orientation.w = q[3]
             robot_marker.scale.x = 0.002
             robot_marker.scale.y = 0.002
             robot_marker.scale.z = 0.002
-            robot_marker.color.a = 1.0
+            robot_marker.color.a = 0.5
             robot_marker.color.r = 0.5
             robot_marker.color.g = 0.5
             robot_marker.color.b = 0.5

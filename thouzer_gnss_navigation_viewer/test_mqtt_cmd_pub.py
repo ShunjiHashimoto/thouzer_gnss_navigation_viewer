@@ -10,38 +10,48 @@ MQTT_PORT = 1883           # MQTTのポート（通常は1883）
 thouzer_topic = MQTTParam.topic_event
 
 # CSVファイルの読み込み
-# gnss_data_file = '../csv/log20241027-150614.csv'
-gnss_data_file = '../csv/log20241027-131648.csv'
-# waypoint_data_file = '../csv/101.csv'
+gnss_file_list = []
+gnss_data_file = '../csv/log20241027-123459_map101.csv'
+gnss_file_list.append(gnss_data_file)
+gnss_data_file = '../csv/log20241027-131648_map102.csv'
+gnss_file_list.append(gnss_data_file)
+
+waypoint_file_list = []
+waypoint_data_file = '../csv/101.csv'
+waypoint_file_list.append(waypoint_data_file)
 waypoint_data_file = '../csv/102.csv'
+waypoint_file_list.append(waypoint_data_file)
+
 latlonyaw_data = []
 waypoint_list = []
 
-with open(gnss_data_file, newline='') as csvfile:
-    reader = csv.reader(csvfile)
-    for row in reader:
-        if(row[5] != "4" or row[14] == "" or row[15] == ""): 
-            print("not fix")
-            continue
-        latlonyaw_data.append({
-            "status":"run",
-            "LatLonYaw": {"lat_deg": float(row[14]), "lon_deg": float(row[15]), "yaw_deg": float(row[17])},
-        })
+for gnss_data in gnss_file_list: 
+    with open(gnss_data, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for row in reader:
+            if(row[5] != "4" or row[14] == "" or row[15] == ""): 
+                print("not fix")
+                continue
+            latlonyaw_data.append({
+                "status":"run",
+                "LatLonYaw": {"lat_deg": float(row[14]), "lon_deg": float(row[15]), "yaw_deg": float(row[21])},
+            })
 
-with open(waypoint_data_file, newline='') as csvfile:
-    reader = csv.reader(csvfile)
-    for i, row in enumerate(reader):
-        if i==0: continue
-        if row[3] == "False":
-            waypoint_list.append({
-                "status":"waypoint",
-                "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
-            })
-        else:
-            waypoint_list.append({
-                "status":"paused",
-                "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
-            })
+for waypoint_file in waypoint_file_list:
+    with open(waypoint_file, newline='') as csvfile:
+        reader = csv.reader(csvfile)
+        for i, row in enumerate(reader):
+            if i==0: continue
+            if row[3] == "False":
+                waypoint_list.append({
+                    "status":"waypoint",
+                    "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
+                })
+            else:
+                waypoint_list.append({
+                    "status":"paused",
+                    "LatLonYaw": {"lat_deg": float(row[0]), "lon_deg": float(row[1]), "yaw_deg": float(row[2])},
+                })
 
 # MQTTクライアントのセットアップ
 client = mqtt.Client()
@@ -93,7 +103,7 @@ for data in latlonyaw_data:
     print(f"Published: {payload}")
 
     # 1秒待機して次のデータを送信
-    time.sleep(0.1)
+    time.sleep(0.075)
 
 # MQTTクライアントの終了
 client.disconnect()
