@@ -1,7 +1,7 @@
 # thouzer_gnss_navigation_viewer
-GNSSナビゲーション時にサウザーの状態をRViz上に表示するためのリポジトリ
-緯度経度はサウザー自体をbrokerとしてMQTT通信で送信されるデータをSubする。
-サウザーがない場合は、自分でmosquittoを使ってbrokerを立ち上げて、MQTT通信をする。   
+GNSSナビゲーション時にサウザーの状態をRViz上に表示するためのリポジトリ  
+緯度経度はサウザー自体をbrokerとしてMQTT通信で送信されるデータをSubする。  
+サウザーがない場合は、自分でmosquittoを使ってbrokerを立ち上げて、MQTT通信をする。    
 
 # Build 
 ```bash
