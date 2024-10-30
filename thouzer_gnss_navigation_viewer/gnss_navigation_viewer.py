@@ -4,16 +4,14 @@ import random
 # ros
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PoseStamped, Quaternion
+from geometry_msgs.msg import PoseStamped
 from visualization_msgs.msg import Marker, MarkerArray
-import numpy as np
 from builtin_interfaces.msg import Duration
 # custom
 from gnss_module.coordinate import blh, getXY
 import gnss_module.WGS84 as datum 
 from .mqtt_handler import MqttHandler
 from .config import MQTTParam
-from tf_transformations import quaternion_from_euler
 
 class GNSSNavigationViewer(Node):
     def __init__(self):
@@ -25,19 +23,9 @@ class GNSSNavigationViewer(Node):
         # MQTTハンドラーを作成し、メッセージ受信時のコールバックを設定
         self.mqtt_handler = MqttHandler(on_message_callback=self.handle_mqtt_message, topic_sub=MQTTParam.topic_event)
         self.mqtt_handler.start_whisperer()  # MQTTのループを開始
-        # 初期の位置を保存する変数
+        # マップ初期位置を設定
         self.initial_blh = blh(datum, 36.083208948105906,140.07766251434052, 0)
     
-    # 時間経過するにつれてマーカの色を透明化する
-    def update_marker_opacity(self, marker_msg):
-        current_time = self.get_clock().now().seconds_nanoseconds()[0]
-        elapsed_time = current_time - marker_msg.header.stamp.sec
-        if elapsed_time >= 10:
-            return
-        marker_msg.color.a = max(0.0, 1.0 - (elapsed_time / 10.0))
-        self.marker_publisher_.publish(marker_msg)
-        self.create_timer(1.0, lambda: self.update_marker_opacity(marker_msg))
-
     # MQTTメッセージを受け取った際に呼び出されるコールバック関数
     def handle_mqtt_message(self, payload: str):
         try:
@@ -122,7 +110,7 @@ class GNSSNavigationViewer(Node):
             # STLファイルのパスを設定
             robot_marker.mesh_resource = "package://thouzer_gnss_navigation_viewer/meshes/RMS-SZE2.STL"
             robot_marker.mesh_use_embedded_materials = True # meshファイルの内部のcolor情報を描画
-            # 中心位置を右左アンテナの中点に設定
+            # 中心位置はロボットの車体中心
             x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
             robot_marker.pose.position.x = x 
             robot_marker.pose.position.y = y

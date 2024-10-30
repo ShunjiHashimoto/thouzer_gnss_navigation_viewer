@@ -51,13 +51,6 @@ class MqttHandler:
         self.client.loop_start()
         time.sleep(0.5)
     
-    def start_nav(self) -> None:
-        msg = {"app": "app-whisperer"}  
-        topic = MQTTParam.topic_exec
-        status = self.publish_mqtt_msg(topic, msg)
-        if status != 0:
-            print(f"Failed to start whisperer to topic {MQTTParam.topic_exec}")
-
     def pub_pos(self,serial: str, map: str, pos: float, last: int, lat_deg: float, lon_deg: float, yaw_deg: float) -> None:
         msg = {"serialId": serial, \
                "data": { \
@@ -98,71 +91,3 @@ class MqttHandler:
             }
         topic = MQTTParam.topic_event
         self.publish_mqtt_msg(topic, msg)
-
-    def pub_success(self,) -> None:
-        msg = {
-            "app": "#success",
-            "running": "OK",
-            "work": "OK",
-            "MT_teach": False,
-            "MT_suspend": False,
-            "timestamp": ""
-        }
-        topic = MQTTParam.topic_status
-        self.publish_mqtt_msg(topic, msg)
-        
-    def avoid_obstacle(self, l: float, theta: float) -> None:
-        msg = {"distance_m": str(l), "direction_deg": str(theta)}  
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-        if status != 0: print(f"Failed to avoid obstacle, send message to topic {MQTTParam.topic_nav}")
-        
-    def pause_memorize(self) -> None:
-        msg = {"app": "pause-memorize"}
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-
-    def start_pause(self) -> None:
-        msg = {"app": "#pause"}
-        topic = MQTTParam.topic_exec
-        status = self.publish_mqtt_msg(topic, msg)
-
-    def start_gnss_memorize(self) -> None:
-        msg = {"app": "start-gnss-memorize"}  
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-        
-    def stop_gnss_memorize(self) -> None:
-        msg = {"app": "stop-gnss-memorize"}  
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-
-    def start_gnss_navigate(self) -> None:
-        self.start_nav()
-        time.sleep(0.5)
-        msg = {"app": "start-gnss-navigate"}  
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-                
-    def stop_gnss_navigate(self) -> None:
-        msg = {"app": "stop-gnss-navigate"}  
-        topic = MQTTParam.topic_nav
-        status = self.publish_mqtt_msg(topic, msg)
-
-    def stop_app(self) -> None:
-        msg = {"app": ""}  
-        topic = MQTTParam.topic_exec
-        status = self.publish_mqtt_msg(topic, msg)
-        if status != 0:
-            print(f"Failed to stop whisperer to topic {MQTTParam.topic_exec}")
-        time.sleep(0.5)
-
-    def stop_whisperer(self) -> None:
-        self.stop_app()
-        self.client.loop_stop()
-    
-    def change_speed_mode(self, mode) -> None:
-        msg = {"app": "#speedmode_" + str(mode)}  
-        print(msg)
-        topic = MQTTParam.topic_exec
-        status = self.publish_mqtt_msg(topic, msg)
