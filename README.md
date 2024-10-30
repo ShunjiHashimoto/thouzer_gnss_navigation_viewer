@@ -9,7 +9,7 @@ $ cd ~/ros2_ws/src/thouzer_gnss_navigation_viewer
 $ docker build -t gnss-docker::latest .
 ```
 ビルドが完了すれば本パッケージをビルドする   
-```
+```bash
 $ cd ~/ros2_ws/src/thouzer_gnss_navigation_viewer/docker
 $ ./run.sh
 $ cd ~/ros2_ws
@@ -18,7 +18,7 @@ $ source ~/ros2_ws/install/setup.bash
 ```
 
 # Usage
-```
+```bash
 # サウザーのbrokerを使わない場合は下記を実行する
 $ mosquitto -v
 # 別のターミナル開いて
