@@ -17,7 +17,7 @@ class GNSSNavigationViewer(Node):
     def __init__(self):
         super().__init__('gnss_navigation_viewer')
         # PoseStampedメッセージをpublishするパブリッシャーを作成
-        self.pose_publisher_ = self.create_publisher(PoseStamped, 'robot_pose', 10)
+        self.pose_publisher_ = self.create_publisher(PoseStamped, 'robot_pose', 200)
         # MarkerArrayメッセージをpublishするパブリッシャーを作成
         self.marker_array_publisher_ = self.create_publisher(MarkerArray, 'visualization_marker_array', 10)
         # MQTTハンドラーを作成し、メッセージ受信時のコールバックを設定
@@ -31,6 +31,53 @@ class GNSSNavigationViewer(Node):
     def handle_mqtt_message(self, payload: str):
         try:
             data = json.loads(payload)
+            if "waypoints" in data["data"] and isinstance(data["data"]["waypoints"], list):
+                # 複数のウェイポイントが含まれる場合
+                waypoints = data["data"]["waypoints"]
+                marker_array_msg = MarkerArray()
+                
+                for waypoint in waypoints:
+                    lat_deg = waypoint["LatLonYaw"]["lat_deg"]
+                    lon_deg = waypoint["LatLonYaw"]["lon_deg"]
+                    yaw_deg = waypoint["LatLonYaw"]["yaw_deg"]
+                    status = waypoint["status"]
+                    is_paused = (status == "paused")
+                    
+                    # PoseStampedメッセージを作成し、パブリッシュ
+                    pose_msg = PoseStamped()
+                    pose_msg.header.stamp = self.get_clock().now().to_msg()
+                    pose_msg.header.frame_id = 'map'
+                    x, y = getXY(self.initial_blh, lat_deg, lon_deg, 0.0)
+                    pose_msg.pose.position.x = x
+                    pose_msg.pose.position.y = y
+                    pose_msg.pose.position.z = 0.0
+                    pose_msg.pose.orientation.z = math.sin(math.radians(yaw_deg) / 2)
+                    pose_msg.pose.orientation.w = math.cos(math.radians(yaw_deg) / 2)
+                    self.pose_publisher_.publish(pose_msg)
+                    self.get_logger().info(f"Published Pose: {pose_msg}")
+
+                    # Markerメッセージを作成し、MarkerArrayに追加
+                    marker_msg = Marker()
+                    marker_msg.header.stamp = self.get_clock().now().to_msg()
+                    marker_msg.header.frame_id = 'map'
+                    marker_msg.ns = 'gnss_navigation'
+                    marker_msg.id = random.randint(1, 100000)
+                    marker_msg.type = Marker.SPHERE
+                    marker_msg.action = Marker.ADD
+                    marker_msg.pose.position.x = x
+                    marker_msg.pose.position.y = y
+                    marker_msg.pose.position.z = 0.5
+                    marker_msg.pose.orientation.w = 1.0
+                    marker_msg.scale.x = 2.0 if is_paused else 1.0
+                    marker_msg.scale.y = 2.0 if is_paused else 1.0
+                    marker_msg.scale.z = 2.0 if is_paused else 1.0
+                    marker_msg.color.r, marker_msg.color.g, marker_msg.color.b = (1.0, 1.0, 0.0) if is_paused else (1.0, 0.0, 0.0)
+                    marker_msg.color.a = 0.6
+                    marker_msg.lifetime = Duration()
+                    marker_array_msg.markers.append(marker_msg)
+                self.marker_array_publisher_.publish(marker_array_msg)
+                return 
+
             waypoint_flag = False
             if data["data"]["status"] == "waypoint" or data["data"]["status"] == "paused": waypoint_flag = True
             # GNSSデータから位置と向きを設定
@@ -72,15 +119,16 @@ class GNSSNavigationViewer(Node):
                 marker_msg.pose.position.y = y
                 marker_msg.pose.position.z = 0.5
                 marker_msg.pose.orientation.w = 1.0
-                marker_msg.scale.x = 0.5
-                marker_msg.scale.y = 0.5
-                marker_msg.scale.z = 0.5
+                marker_msg.scale.x = 1.0
+                marker_msg.scale.y = 1.0
+                marker_msg.scale.z = 1.0
                 marker_msg.color.a = 0.6
                 marker_msg.color.r = 0.0
                 marker_msg.color.g = 1.0
                 marker_msg.color.b = 0.0
                 yaw_deg = data["data"]["LatLonYaw"]["yaw_deg"]
                 if data["data"]["status"] == "paused":
+                    print("paused")
                     marker_msg.color.r = 1.0
                     marker_msg.color.g = 1.0
                     marker_msg.color.b = 0.0
@@ -89,9 +137,9 @@ class GNSSNavigationViewer(Node):
                     marker_msg.color.g = 0.0
                     marker_msg.color.b = 0.0
                 if waypoint_flag:
-                    marker_msg.scale.x = 1.0
-                    marker_msg.scale.y = 1.0
-                    marker_msg.scale.z = 1.0
+                    marker_msg.scale.x = 2.0
+                    marker_msg.scale.y = 2.0
+                    marker_msg.scale.z = 2.0
                 marker_msg.lifetime = Duration()
                 # MarkerをMarkerArrayに追加
                 marker_array_msg.markers.append(marker_msg)
@@ -118,9 +166,9 @@ class GNSSNavigationViewer(Node):
             robot_marker.pose.position.z = 0.0
             robot_marker.pose.orientation.z = math.sin(math.radians(yaw_deg) / 2)
             robot_marker.pose.orientation.w = math.cos(math.radians(yaw_deg) / 2)
-            robot_marker.scale.x = 0.002
-            robot_marker.scale.y = 0.002
-            robot_marker.scale.z = 0.002
+            robot_marker.scale.x = 0.003
+            robot_marker.scale.y = 0.003
+            robot_marker.scale.z = 0.003
             robot_marker.color.a = 1.0
             robot_marker.color.r = 0.5
             robot_marker.color.g = 0.5
