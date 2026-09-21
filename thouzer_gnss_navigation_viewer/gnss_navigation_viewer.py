@@ -24,8 +24,10 @@ class GNSSNavigationViewer(Node):
         self.mqtt_handler = MqttHandler(on_message_callback=self.handle_mqtt_message, topic_sub=MQTTParam.topic_event)
         self.mqtt_handler.start_whisperer()  # MQTTのループを開始
         # マップ初期位置を設定
-        # self.initial_blh = blh(datum, 36.083208948105906,140.07766251434052, 0)
-        self.initial_blh = blh(datum, 36.088183630136,140.1136848685115, 0)
+        # 市役所前
+        self.initial_blh = blh(datum, 36.083208948105906,140.07766251434052, 0)
+        # 吾妻
+        # self.initial_blh = blh(datum, 36.088183630136,140.1136848685115, 0)
     
     # MQTTメッセージを受け取った際に呼び出されるコールバック関数
     def handle_mqtt_message(self, payload: str):
