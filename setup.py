@@ -24,7 +24,8 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'gnss_viewer = thouzer_gnss_navigation_viewer.gnss_navigation_viewer:main'
+            'gnss_viewer = thouzer_gnss_navigation_viewer.gnss_navigation_viewer:main',
+            'csv_waypoint_viewer = thouzer_gnss_navigation_viewer.csv_waypoint_viewer:main'
         ],
     },
 )
